@@ -4,32 +4,50 @@
 //
 //  Created by Igor Bueno Franco on 13/07/25.
 //
-
 import XCTest
+import CoreData
+@testable import Roommate
 
 final class AddRoomViewModelTests: XCTestCase {
+    
+    var viewModel: AddRoomViewModel!
+    var context: NSManagedObjectContext!
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    override func setUp() {
+        super.setUp()
+        context = PersistenceController(inMemory: true).container.viewContext
+        viewModel = AddRoomViewModel(context: context)
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    override func tearDown() {
+        viewModel = nil
+        context = nil
+        super.tearDown()
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    // TESTE 3: Garante que uma nova sala pode ser adicionada com sucesso.
+    func testAddRoom_WithValidName_ShouldUpdateRoomsList() throws {
+        let initialCount = viewModel.rooms.count
+        let roomName = "Sala de Teste Alpha"
+
+        try viewModel.addRoom(name: roomName)
+
+        XCTAssertEqual(viewModel.rooms.count, initialCount + 1, "A contagem de salas deveria aumentar em 1")
+        XCTAssertTrue(viewModel.rooms.contains(where: { $0.name == roomName }), "A nova sala não foi encontrada na lista")
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    // TESTE 4: Garante que uma sala sem reservas pode ser deletada.
+    func testDeleteRoom_WithoutReservations_ShouldBeRemoved() throws {
+        let roomName = "Sala para Deletar"
+        try viewModel.addRoom(name: roomName)
+        guard let roomToDelete = viewModel.rooms.first(where: { $0.name == roomName }) else {
+            XCTFail("Falha ao criar a sala para o teste de exclusão")
+            return
         }
-    }
 
+        let errorMessage = viewModel.deleteRoom(roomToDelete)
+
+        XCTAssertNil(errorMessage, "Não deveria haver mensagem de erro ao deletar uma sala vazia")
+        XCTAssertFalse(viewModel.rooms.contains(where: { $0.id == roomToDelete.id }), "A sala ainda existe após a exclusão")
+    }
 }

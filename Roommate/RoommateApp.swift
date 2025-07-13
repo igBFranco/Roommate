@@ -13,8 +13,29 @@ struct RoommateApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-        }
+                    TabView {
+                        NavigationView {
+                            CalendarView(viewModel: CalendarViewModel(service: AppContainer.shared.reservationService))
+                        }
+                        .tabItem {
+                            Label("Reservas", systemImage: "calendar")
+                        }
+
+                        NavigationView {
+                            MyReservationsView(viewModel: CalendarViewModel(service: AppContainer.shared.reservationService))
+                        }
+                        .tabItem {
+                            Label("Minhas Reservas", systemImage: "list.bullet")
+                        }
+                        NavigationView {
+                            AddRoomView(
+                                viewModel: AddRoomViewModel(context: persistenceController.viewContext)
+                            )
+                        }
+                        .tabItem {
+                            Label("Salas", systemImage: "play.house")
+                        }
+                    }
+                }
     }
 }

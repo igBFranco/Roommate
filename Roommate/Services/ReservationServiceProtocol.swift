@@ -6,3 +6,11 @@
 //
 
 import Foundation
+
+protocol ReservationServiceProtocol {
+    func getAvailableRooms() -> [Room]
+    func getReservations() -> [Reservation]
+    func addReservation(_ reservation: Reservation) throws
+    func removeReservation(_ reservation: Reservation) throws
+
+}

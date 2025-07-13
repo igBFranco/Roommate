@@ -8,17 +8,36 @@
 import Foundation
 
 class MockReservationService: ReservationServiceProtocol {
-    var shouldConflict = false
-    private(set) var reservations: [Reservation] = []
-    
-    func getAvailableRooms() -> [Room] { return [] }
-    
-    func getReservations() -> [Reservation] { return reservations }
+    var reservations: [Reservation] = []
+    var rooms: [Room] = [
+        Room(id: UUID(), name: "Sala Mock 1"),
+        Room(id: UUID(), name: "Sala Mock 2")
+    ]
+    var shouldThrowConflictError = false
+
+    func getAvailableRooms() -> [Room] {
+        return rooms
+    }
+
+    func getReservations() -> [Reservation] {
+        return reservations
+    }
 
     func addReservation(_ reservation: Reservation) throws {
-        if shouldConflict {
+        if shouldThrowConflictError {
             throw ReservationError.conflict
         }
+        
+        let isConflict = reservations.contains {
+            $0.room == reservation.room &&
+            $0.startTime < reservation.endTime &&
+            reservation.startTime < $0.endTime
+        }
+
+        if isConflict {
+            throw ReservationError.conflict
+        }
+        
         reservations.append(reservation)
     }
 

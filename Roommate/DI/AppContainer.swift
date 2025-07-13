@@ -6,3 +6,15 @@
 //
 
 import Foundation
+
+final class AppContainer {
+    static let shared = AppContainer()
+
+    let persistenceController = PersistenceController.shared
+
+    let reservationService: ReservationServiceProtocol
+
+    private init() {
+        reservationService = CoreDataReservationService(context: persistenceController.viewContext)
+    }
+}

@@ -4,32 +4,59 @@
 //
 //  Created by Igor Bueno Franco on 13/07/25.
 //
-
 import XCTest
+import CoreData
+@testable import Roommate
 
-final class CoreDataReservationServiceTests: XCTestCase {
+class CoreDataReservationServiceTests: XCTestCase {
+
+    var service: CoreDataReservationService!
+    var context: NSManagedObjectContext!
+    var testRoom: Room!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        try super.setUpWithError()
+        let persistenceController = PersistenceController(inMemory: true)
+        context = persistenceController.container.viewContext
+        service = CoreDataReservationService(context: context)
+
+        let roomEntity = RoomEntity(context: context)
+        roomEntity.id = UUID()
+        roomEntity.name = "Sala Teste CoreData"
+        testRoom = roomEntity.toRoom()
+        try context.save()
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    override func tearDown() {
+        service = nil
+        context = nil
+        super.tearDown()
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-    }
+    // TESTE 5: Garante que o serviço impede reservas conflitantes.
+    func testAddReservation_WhenConflictExists_ShouldThrowError() throws {
+        let now = Date()
+        let reservation1 = Reservation(
+            id: UUID(),
+            room: testRoom,
+            startTime: now,
+            endTime: now.addingTimeInterval(3600),
+            description: "Primeira Reserva"
+        )
+        
+        let conflictingReservation = Reservation(
+            id: UUID(),
+            room: testRoom,
+            startTime: now.addingTimeInterval(1800),
+            endTime: now.addingTimeInterval(5400),
+            description: "Reserva Conflitante"
+        )
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        try service.addReservation(reservation1)
+
+        // Verifica se adicionar a segunda (conflitante) lança o erro esperado
+        XCTAssertThrowsError(try service.addReservation(conflictingReservation)) { error in
+            XCTAssertEqual(error as? ReservationError, ReservationError.conflict, "O erro lançado deveria ser .conflict")
         }
     }
-
 }

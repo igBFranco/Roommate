@@ -6,3 +6,11 @@
 //
 
 import Foundation
+
+struct Reservation: Identifiable, Equatable {
+    let id: UUID
+    let room: Room
+    let startTime: Date
+    let endTime: Date
+    let description: String
+}
